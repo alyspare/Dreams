@@ -24,7 +24,17 @@ a{color:var(--on)}
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 :focus-visible{outline:3px solid var(--light);outline-offset:2px}
 /* sky */
-#app{position:relative;overflow:hidden;min-height:100vh}
+/* the page never slides sideways: clouds that hang past the edge are clipped (clip can't be scrolled, unlike hidden),
+   and on touch screens the page only pans up and down, so a sideways swipe is free to change pages */
+#app{position:relative;overflow:hidden;overflow:clip;min-height:100vh}
+.sky,.hsky,.bband{overflow-x:hidden;overflow-x:clip}
+#main,#notices,footer{touch-action:pan-y pinch-zoom}
+@keyframes swl{from{transform:translateX(40px);opacity:.35}to{transform:none;opacity:1}}
+@keyframes swr{from{transform:translateX(-40px);opacity:.35}to{transform:none;opacity:1}}
+#main.sw-l>.wrap{animation:swl .28s ease-out}#main.sw-r>.wrap{animation:swr .28s ease-out}
+@media (prefers-reduced-motion:reduce){#main.sw-l>.wrap,#main.sw-r>.wrap{animation:none}}
+/* iPhone zooms in on any box with text under 16px; keep every box at 16px on touch screens */
+@media (pointer:coarse){#app input,#app select,#app textarea,#drawer input,#drawer select,#drawer textarea:not(.d-title),#sketch input,#sketch select{font-size:16px}}
 .sky{position:absolute;inset:0;pointer-events:none;z-index:0}
 .cl{position:absolute;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none}
 .st{position:absolute;width:4px;height:4px;border-radius:50%;background:#FFF2A8;box-shadow:0 0 8px 3px rgba(255,214,90,.75);animation:tw 3.6s ease-in-out infinite;pointer-events:none}
@@ -918,7 +928,9 @@ function renderNotices(){
 function go(id){
   if(!PAGES.some(function(p){ return p.id === id; })) id = 'capture';
   closeMenu();
-  if(S.ui.page !== id){ S.ui.page = id; save(); render(); window.scrollTo(0, 0); }
+  if(S.ui.page !== id){ S.ui.page = id; save(); render(); window.scrollTo(0, 0);
+    if(SWD){ main.classList.remove('sw-l', 'sw-r'); void main.offsetWidth; main.classList.add(SWD > 0 ? 'sw-l' : 'sw-r'); clearTimeout(main._swt); main._swt = setTimeout(function(){ main.classList.remove('sw-l', 'sw-r'); }, 400); } }
+  SWD = 0;
   if(location.hash !== '#' + id) try { history.replaceState(null, '', '#' + id); } catch(e){ location.hash = id; }
 }
 function closeMenu(){ var m = $('#menu'); if(m && m.classList.contains('open')){ m.classList.remove('open'); var b = nav.querySelector('.menu-btn'); if(b) b.setAttribute('aria-expanded', 'false'); } }
@@ -1197,7 +1209,7 @@ window.addEventListener('hashchange', function(){ go(location.hash.slice(1)); })
 document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden') flush(); else if(window.SY_READY && SYS.on) syncNow(); });
 window.addEventListener('pagehide', flush);
 /* swipe between pages on iPhone and iPad */
-var SW = null;
+var SW = null, SWD = 0;
 document.addEventListener('touchstart', function(e){
   if(e.touches.length !== 1 || !dr.hidden) { SW = null; return; }
   var tg = e.target; if(tg.closest && tg.closest('input, textarea, select, .scale, .chips, .cal, .week, .tag-in, .seg, .pages, #sketch')) { SW = null; return; }
@@ -1205,9 +1217,9 @@ document.addEventListener('touchstart', function(e){
 }, {passive:true});
 document.addEventListener('touchend', function(e){
   if(!SW) return; var t0 = e.changedTouches[0], dx = t0.clientX - SW.x, dy = t0.clientY - SW.y, ms = Date.now() - SW.t; SW = null;
-  if(ms > 700 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+  if(ms > 800 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
   var i = PAGES.map(function(p){ return p.id; }).indexOf(S.ui.page), j = i + (dx < 0 ? 1 : -1);
-  if(j >= 0 && j < PAGES.length) go(PAGES[j].id);
+  if(j >= 0 && j < PAGES.length){ SWD = dx < 0 ? 1 : -1; go(PAGES[j].id); }
 }, {passive:true});
 
 /* ---------- 07 sketch pad ----------
