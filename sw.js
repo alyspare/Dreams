@@ -1,5 +1,5 @@
 // Keeps the journal working with no internet once it has been opened once.
-const CACHE = 'dreams-journal-v3';
+const CACHE = 'dreams-journal-v4';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -16,8 +16,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(Promise.race([
       fetch(req).then(r => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); } return r; }),
       new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), 3500))
-    ]).catch(() => caches.match('./index.html')));
+    ]).catch(() => caches.open(CACHE).then(c => c.match('./index.html'))));
     return;
   }
-  e.respondWith(caches.match(req, {ignoreSearch: true}).then(r => r || fetch(req)));
+  e.respondWith(caches.open(CACHE).then(c => c.match(req, {ignoreSearch: true})).then(r => r || fetch(req)));
 });

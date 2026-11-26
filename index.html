@@ -384,6 +384,54 @@ html.sk-open,html.sk-open body{overflow:hidden;overscroll-behavior:none}
   .head{padding-top:44px}
   .notice{margin:12px max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left))}
 }
+
+/* ---------- import from iPhone Notes: review backlog ---------- */
+.cap-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px}
+.cap-head .pill-date{margin:0}
+.bl-tab{gap:8px !important}
+.bl-badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--gold);color:#174E6C;font-size:11.5px;font-weight:800;box-shadow:0 0 10px rgba(244,213,141,.8)}
+.bl-note{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 56px;padding:18px 22px;text-decoration:none;color:var(--ink);border-left:6px solid var(--gold)}
+.bl-note b{font-weight:700}
+.bl-page .bl-imp{margin-bottom:28px;overflow:hidden}
+.bl-paste{min-height:120px}
+.bl-listh{position:relative;z-index:2;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:12px 18px;border-radius:16px;background:rgba(24,91,126,.92);color:#fff;box-shadow:0 8px 28px rgba(10,50,80,.25)}
+.bl-listh h2{margin:0;font-size:22px;letter-spacing:-.02em}
+.bl-listh span{font-size:13.5px;color:var(--on)}
+.bl-listh .btn{margin-left:auto}
+.bl-list{display:grid;gap:16px}
+.bl-item{padding:22px 24px}
+.bl-row{display:grid;grid-template-columns:120px minmax(0,1fr);gap:20px;align-items:start}
+.bl-l{display:flex;flex-direction:column;align-items:flex-end;text-align:right;padding-top:2px}
+.bl-d{font:italic 400 34px/1 'Instrument Serif',serif;color:#174E6C;background:linear-gradient(transparent 58%,#FDE9B8 58%);padding:0 4px}
+.bl-dw{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
+.bl-r{min-width:0}
+.bl-chips{gap:6px !important;margin-bottom:8px}
+.bl-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bl-top h3{font-size:18px;min-width:0;overflow-wrap:anywhere}
+.bl-prev{margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#43525F}
+.pill.bl-need{background:#FDE4D0;color:#8A3B0B}
+.pill.bl-dup{background:#FFF1C9;color:#7A5300}
+.bl-form{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+.bl-ta{min-height:96px;overflow:hidden}
+.bl-sgk{font-style:normal;font-weight:700;text-transform:none;letter-spacing:0;color:#B07A06;margin-left:6px}
+.chip.sug{border-color:#E7C46A;box-shadow:0 0 0 1px #F4D58D inset}
+.chip .bl-sg,.tag .bl-sg{color:#C38A00;font-size:11px;line-height:1}
+.chip[aria-pressed=true] .bl-sg{color:var(--gold)}
+.tag.sug{background:#FFF4D6}
+.bl-acts{margin-top:18px}
+.bl-acts .bl-del{margin-left:auto}
+@media (max-width:640px){
+  .bl-item{padding:18px 16px}
+  .bl-row{grid-template-columns:1fr;gap:6px}
+  .bl-l{flex-direction:row;align-items:baseline;gap:10px;text-align:left}
+  .bl-d{font-size:28px}
+  .bl-dw{margin:0}
+  .bl-top{align-items:flex-start}
+  .bl-listh .btn{margin-left:0}
+  .bl-acts .btn{flex:1 1 auto}
+  .bl-acts .bl-del{margin-left:0}
+  .bl-note{padding:16px}
+}
 </style>
 </head>
 <body>
@@ -407,7 +455,8 @@ var PAGES = [
   {id:'patterns', label:'Patterns', h1:'Dream <span class="hl">Patterns</span>', sub:'What your dreams have in common over time.'},
   {id:'lessons', label:'Spiritual Lessons', h1:'Spiritual <span class="hl">Lessons</span>', sub:'What this season is teaching you, what past seasons taught you, and how it shows up in your dreams.'},
   {id:'lucid', label:'Lucid Lab', h1:'Lucid <span class="hl">Lab</span>', sub:'Set an intention, practice reality checks and learn your personal dream signs.'},
-  {id:'sketch', label:'Sketch Pad', h1:'Sketch <span class="hl">Pad</span>', sub:'Draw what you saw. Made for Apple Pencil on iPad, and it works with a finger or a mouse too.'}
+  {id:'sketch', label:'Sketch Pad', h1:'Sketch <span class="hl">Pad</span>', sub:'Draw what you saw. Made for Apple Pencil on iPad, and it works with a finger or a mouse too.'},
+  {id:'backlog', label:'Review backlog', eyebrow:'From your iPhone notes', h1:'Review <span class="hl">Backlog</span>', sub:'Your notes, split into one dream per morning. Look each one over, fill in what you like, then add it to your journal.', extra:true}
 ];
 var SPIRIT = ['Heavenly','Prophetic','Warning','Spiritual Attack'];
 var TYPES = ['Heavenly','Prophetic','Vivid','Lucid','Ordinary','Recurring','Warning','Spiritual Attack','Fragment','False awakening'];
@@ -466,13 +515,26 @@ function normLesson(x){
     notes:(Array.isArray(x.notes) ? x.notes : []).filter(function(n){ return n && n.id; }).map(function(n){ return {id:String(n.id), date:validISO(n.date) ? n.date : today(), text:String(n.text || '')}; }),
     created:+x.created || 0, updated:+x.updated || 0};
 }
+/* dreams waiting for review after an iPhone Notes import (synced, with tombstones so a reviewed one never comes back) */
+function blNorm(b){
+  var out = {items:[], done:{}}; if(!b || typeof b !== 'object') return out;
+  if(b.done && typeof b.done === 'object') Object.keys(b.done).forEach(function(k){ out.done[k] = +b.done[k] || 1; });
+  out.items = (Array.isArray(b.items) ? b.items : []).filter(function(x){ return x && x.id && !out.done[x.id]; }).map(function(x){
+    var sg = x.sug && typeof x.sug === 'object' ? x.sug : {};
+    return {id:String(x.id), date:validISO(x.date) ? x.date : today(), title:String(x.title || ''), text:String(x.text || ''), types:normTypes(x.types), feelings:arr(x.feelings),
+      people:arr(x.people), places:arr(x.places), symbols:arr(x.symbols), food:String(x.food || ''), nodate:!!x.nodate, created:+x.created || 0, updated:+x.updated || 0,
+      sug:{types:arr(sg.types), feelings:arr(sg.feelings), people:arr(sg.people), places:arr(sg.places), symbols:arr(sg.symbols)}};
+  });
+  return out;
+}
 function normalize(d){
-  var b = {v:1, dreams:[], lessons:[], intents:{}, lib:{}, signs:[], checks:{}, settings:{planner:'https://alyspare.github.io/Planner/'},
+  var b = {v:1, dreams:[], lessons:[], backlog:{items:[], done:{}}, intents:{}, lib:{}, signs:[], checks:{}, settings:{planner:'https://alyspare.github.io/Planner/'},
     ui:{page:'capture', cal:{t:'month', d:today(), sel:today()}, pat:{t:'month', d:today()}, lib:'symbols', q:'', draft:blankDraft(), closed:{}}, lastBackup:0};
   if(!d || typeof d !== 'object') return b;
   var src = Array.isArray(d.dreams) ? d.dreams : Array.isArray(d.items) ? d.items : [];
   b.dreams = src.map(normDream).filter(Boolean);
   b.lessons = (Array.isArray(d.lessons) ? d.lessons : []).map(normLesson).filter(Boolean);
+  b.backlog = blNorm(d.backlog);
   if(d.intents && typeof d.intents === 'object') Object.keys(d.intents).forEach(function(k){ if(validISO(k) && String(d.intents[k] || '').trim()) b.intents[k] = String(d.intents[k]); });
   if(d.lib && typeof d.lib === 'object') Object.keys(d.lib).forEach(function(k){ var e = d.lib[k]; if(e && e.name && /^(people|places|symbols):/.test(k)) b.lib[k] = {type:k.split(':')[0], name:String(e.name), meaning:String(e.meaning || ''), updated:+e.updated || 0}; });
   b.signs = (Array.isArray(d.signs) ? d.signs : []).filter(function(s){ return s && s.id && s.text; }).map(function(s){ return {id:String(s.id), text:String(s.text), cat:SIGN_CATS.some(function(c){ return c[0] === s.cat; }) ? s.cat : 'Context', seen:Math.max(0, +s.seen || 0), created:+s.created || 0}; });
@@ -613,7 +675,7 @@ function detailFields(o, scope){
 }
 function head(p, extra){
   var i = PAGES.indexOf(p) + 1;
-  return '<section class="head">' + headSky() + '<div class="hin"><p class="eyebrow">' + pad(i) + ' · ' + esc(p.label) + '</p><h1>' + p.h1 + '</h1><p class="sub">' + esc(p.sub) + '</p>' + (extra || '') + '</div></section>';
+  return '<section class="head">' + headSky() + '<div class="hin"><p class="eyebrow">' + (p.eyebrow ? esc(p.eyebrow) : pad(i) + ' · ' + esc(p.label)) + '</p><h1>' + p.h1 + '</h1><p class="sub">' + esc(p.sub) + '</p>' + (extra || '') + '</div></section>';
 }
 function bband(){ return '<div class="bband" aria-hidden="true">' + cimg('wl', 'bb-1') + cimg('bm', 'bb-2') + cimg('wl', 'bb-3', true) + cimg('gm', 'bb-4', true) + cimg('bl', 'bb-5') + cimg('wm', 'bb-6') + '</div>'; }
 function rowBtn(x, right){
@@ -660,7 +722,7 @@ function capturePage(p){
   var otn = '<section class="card"><p class="k">On this night' + (past ? ' · ' + parse(past.date).y : '') + '</p>' +
     (past ? '<p style="margin:6px 0 6px;font:italic 400 24px/1.2 \'Instrument Serif\',serif">' + esc(dTitle(past)) + '</p><p style="margin:0 0 14px;font-size:14px;color:#43525F">' + esc(clip(past.text, 160)) + '</p><button type="button" class="btn sm" data-act="open" data-id="' + esc(past.id) + '">Read it</button>'
       : '<p style="margin:6px 0 0;font-size:14px;color:#43525F">Once you have a year of entries, a past dream from tonight’s date shows up here.</p>') + cc('bm', 'cc-d', true) + '</section>';
-  return head(p, '<p class="pill-date">' + moonLine(t) + '</p>') + '<div class="body"><div class="grid2"><div class="col-main">' + cap + det + '</div><aside class="col-side">' + intent + tonight + week + list + otn + '</aside></div>' + bband() + '</div>';
+  return head(p, '<div class="cap-head"><p class="pill-date">' + moonLine(t) + '</p><a class="btn sm ghost bl-imp-btn" href="#backlog">Import from iPhone Notes</a></div>') + '<div class="body">' + blBanner() + '<div class="grid2"><div class="col-main">' + cap + det + '</div><aside class="col-side">' + intent + tonight + week + list + otn + '</aside></div>' + bband() + '</div>';
 }
 
 /* ---------- 02 dream calendar ---------- */
@@ -886,16 +948,18 @@ function lucidPage(p){
 /* ---------- render ---------- */
 var JUST_SAVED = '', CAP_MSG = '', D = {mode:null}, lastFocus = null;
 var nav = $('#nav'), main = $('#main'), dr = $('#drawer'), scrim = $('#scrim');
+/* the backlog tab only shows while dreams are waiting (or while you're on it) */
+function navPages(){ return PAGES.filter(function(p){ return p.id !== 'backlog' || S.backlog.items.length || S.ui.page === 'backlog'; }); }
 function pageById(id){ return PAGES.filter(function(p){ return p.id === id; })[0] || PAGES[0]; }
 function renderNav(){
-  var cur = S.ui.page, links = PAGES.map(function(p, i){ return '<a href="#' + p.id + '"' + (p.id === cur ? ' aria-current="page"' : '') + '><span class="n">' + pad(i + 1) + '</span>' + esc(p.label) + '</a>'; }).join('');
+  var cur = S.ui.page, nbl = S.backlog.items.length, links = navPages().map(function(p, i){ return p.id === 'backlog' ? '<a href="#backlog" class="bl-tab"' + (p.id === cur ? ' aria-current="page"' : '') + '>Review backlog' + (nbl ? '<span class="bl-badge">' + nbl + '</span>' : '') + '</a>' : '<a href="#' + p.id + '"' + (p.id === cur ? ' aria-current="page"' : '') + '><span class="n">' + pad(i + 1) + '</span>' + esc(p.label) + '</a>'; }).join('');
   var keep = nav.querySelector('.pages'), sl = keep ? keep.scrollLeft : null;
   nav.innerHTML = '<div class="nav-in"><div class="nav-top"><button type="button" class="brand" data-go="capture">' + LOGO + 'Dreams Journal</button><div class="nav-r">' +
     '<button type="button" class="sync" id="sync" data-act="settings" title="Backup &amp; sync"><i></i><span></span></button>' +
     '<a class="pl-link" href="' + esc(S.settings.planner) + '">Personal Planner ↗</a>' +
     '<button type="button" class="menu-btn" data-act="menu" aria-expanded="false" aria-controls="menu" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></button></div></div>' +
     '<div class="pages" aria-label="Pages">' + links + '</div>' +
-    '<div class="menu" id="menu">' + links + '<hr><button type="button" data-act="settings">Backup &amp; sync</button><a href="' + esc(S.settings.planner) + '">Personal Planner ↗</a></div></div>';
+    '<div class="menu" id="menu">' + links + '<hr>' + (cur === 'backlog' || nbl ? '' : '<a href="#backlog">Import from iPhone Notes</a>') + '<button type="button" data-act="settings">Backup &amp; sync</button><a href="' + esc(S.settings.planner) + '">Personal Planner ↗</a></div></div>';
   syncPill();
   /* keep the current page's tab in view in the scrolling row */
   var row = nav.querySelector('.pages'), a = row && row.querySelector('[aria-current]');
@@ -907,8 +971,12 @@ function render(){
   var ae = document.activeElement, key = ae && main.contains(ae) ? (ae.getAttribute('data-df') || ae.getAttribute('data-int') || ae.getAttribute('data-tagin') || (ae.hasAttribute('data-q') ? 'q' : '')) : '', sel = null;
   if(key) try { sel = [ae.selectionStart, ae.selectionEnd]; } catch(e){}
   renderNav(); renderNotices();
-  var p = pageById(S.ui.page), h = {capture:capturePage, calendar:calendarPage, library:libraryPage, patterns:patternsPage, lessons:lessonsPage, lucid:lucidPage, sketch:sketchPage}[p.id](p);
+  var p = pageById(S.ui.page), h = {capture:capturePage, calendar:calendarPage, library:libraryPage, patterns:patternsPage, lessons:lessonsPage, lucid:lucidPage, sketch:sketchPage, backlog:backlogPage}[p.id](p);
+  /* the page keeps its height until long boxes are sized, so the scroll position never jumps */
+  main.style.minHeight = main.offsetHeight + 'px';
   main.innerHTML = skyLayer(p.id) + '<div class="wrap">' + h + '</div>';
+  blAfter();
+  main.style.minHeight = '';
   document.title = p.label + ' · Dreams Journal';
   if(key){
     var el = main.querySelector('[data-df="' + key + '"],[data-int="' + key + '"],[data-tagin="' + key + '"]' + (key === 'q' ? ',[data-q]' : ''));
@@ -1044,7 +1112,7 @@ function exportBackup(){
   skAll().then(function(sk){ exportNow(sk); }, function(){ exportNow([]); });
 }
 function exportNow(sketches){
-  var data = JSON.stringify({app:'dreams-journal', exported:new Date().toISOString(), dreams:S.dreams, lessons:S.lessons, intents:S.intents, lib:S.lib, signs:S.signs, checks:S.checks, settings:S.settings, sketches:sketches}, null, 1);
+  var data = JSON.stringify({app:'dreams-journal', exported:new Date().toISOString(), dreams:S.dreams, lessons:S.lessons, backlog:S.backlog, intents:S.intents, lib:S.lib, signs:S.signs, checks:S.checks, settings:S.settings, sketches:sketches}, null, 1);
   var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], {type:'application/json'})); a.download = 'dreams-journal-' + today() + '.json';
   document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
   S.lastBackup = Date.now(); flush(); renderNotices(); if(D.mode === 'settings') drawSettings();
@@ -1064,6 +1132,8 @@ importFile.addEventListener('change', function(){
       n.lessons.forEach(function(l){ var cur = getLesson(l.id); if(!cur) S.lessons.push(l); else if((l.updated || 0) > (cur.updated || 0)) S.lessons[S.lessons.indexOf(cur)] = l; });
       if(Array.isArray(d.sketches) && d.sketches.length) skImport(d.sketches);
       Object.keys(n.checks).forEach(function(k){ S.checks[k] = Math.max(S.checks[k] || 0, n.checks[k]); });
+      Object.assign(S.backlog.done, n.backlog.done); var hb = {}; S.backlog.items.forEach(function(x){ hb[x.id] = 1; });
+      S.backlog.items = S.backlog.items.filter(function(x){ return !S.backlog.done[x.id]; }).concat(n.backlog.items.filter(function(x){ return !hb[x.id] && !S.backlog.done[x.id]; }));
       flush(); render(); alertMsg('Imported ' + plural(added.length, 'dream') + '.');
     } catch(e){ alertMsg('That file isn’t a Dreams Journal backup.'); }
     importFile.value = '';
@@ -1218,8 +1288,8 @@ document.addEventListener('touchstart', function(e){
 document.addEventListener('touchend', function(e){
   if(!SW) return; var t0 = e.changedTouches[0], dx = t0.clientX - SW.x, dy = t0.clientY - SW.y, ms = Date.now() - SW.t; SW = null;
   if(ms > 800 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-  var i = PAGES.map(function(p){ return p.id; }).indexOf(S.ui.page), j = i + (dx < 0 ? 1 : -1);
-  if(j >= 0 && j < PAGES.length){ SWD = dx < 0 ? 1 : -1; go(PAGES[j].id); }
+  var np = navPages(), i = np.map(function(p){ return p.id; }).indexOf(S.ui.page), j = i + (dx < 0 ? 1 : -1);
+  if(j >= 0 && j < np.length){ SWD = dx < 0 ? 1 : -1; go(np[j].id); }
 }, {passive:true});
 
 /* ---------- 07 sketch pad ----------
@@ -1481,11 +1551,213 @@ document.addEventListener('keydown', function(e){
 window.addEventListener('pagehide', function(){ if(SK.cur && SK.cur.updated) skSave(); });
 skLoad();
 
+/* ---------- import from iPhone Notes: review backlog ---------- */
+var BL_OPEN = '', BL_MSG = '';
+var BL_MON = 'jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?';
+var BL_WD = '(?:(?:mon|tues?|wed(?:nes)?|thu(?:rs?)?|fri|sat(?:ur)?|sun)(?:day)?\\.?,?\\s+)?';
+var BL_DATE = BL_WD + '(?:(\\d{1,2})[\\/.\\-](\\d{1,2})(?:[\\/.\\-](\\d{2,4}))?|(' + BL_MON + ')\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?)';
+var BL_AT = new RegExp('^' + BL_DATE + '(?![\\d\\/])\\s*(?:[:\\-\u2013\u2014|]\\s*|\\s+|$)', 'i');
+var BL_END = new RegExp('^(.{1,70}?)\\s*[:\\-\u2013\u2014|]\\s*' + BL_DATE + '\\s*[.!]?\\s*$', 'i');
+function blMonth(s){ return ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'].indexOf(String(s).slice(0, 3).toLowerCase()) + 1; }
+function blYmd(m, off, lastY){
+  var mo, d, y;
+  if(m[off]){ mo = +m[off]; d = +m[off + 1]; y = m[off + 2] ? +m[off + 2] : 0; }
+  else { mo = blMonth(m[off + 3]); d = +m[off + 4]; y = m[off + 5] ? +m[off + 5] : 0; }
+  if(y && y < 100) y += 2000;
+  var t = today(), guess = !y;
+  if(!y) y = lastY || parse(t).y;
+  if(mo < 1 || mo > 12 || d < 1 || d > dim(y, mo)) return null;
+  var out = iso(y, mo, d);
+  if(guess && !lastY && out > t) out = iso(y - 1, mo, Math.min(d, dim(y - 1, mo)));
+  return out;
+}
+var BL_STOP_END = ' and but or so the a an of to with at for in on as that then i we he she my his her it was is ';
+function blTitle(text){
+  var first = String(text || '').split(/\n/)[0].replace(/^(i (had|have) a dream|i dreamt|i dreamed|dreamt|dreamed|last night)( that| about| of)?\s*/i, '').split(/[.!?;:,]/)[0].replace(/\s+/g, ' ').trim(), w = first.split(' ').slice(0, 7);
+  while(w.length > 2 && BL_STOP_END.indexOf(' ' + w[w.length - 1].toLowerCase() + ' ') >= 0) w.pop();
+  var s = w.join(' '); return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+/* suggestions from her own words; she confirms each one */
+var BL_SUG = {
+  types:[['Heavenly', /\b(heaven(ly)?|angels?|jesus|holy spirit|god (spoke|showed|told)|throne|glory|golden light)\b/i],
+    ['Prophetic', /\b(prophe(tic|cy)|came true|comes? to pass|premonition|foreshadow(ed|ing)?|d[eé]j[aà] vu)\b/i],
+    ['Vivid', /\b(vivid|so real|felt (so )?real|like real life)\b/i],
+    ['Lucid', /\b(lucid|knew (i was|it was a) dream(ing)?|realized (i was|it was a) dream(ing)?|aware (that )?i was dreaming|took control)\b/i],
+    ['Recurring', /\b(recurring|same dream|(this|that) dream again|dreamt? (it|this|that) again|keeps? (coming back|happening)|again and again)\b/i],
+    ['Warning', /\b(warning|warned|warn(s|ing)? me)\b/i],
+    ['Spiritual Attack', /\b(nightmares?|demon(s|ic)?|evil (spirit|presence)|attack(ed|ing)? (me|in my sleep)|sleep paralysis|couldn'?t move|pinned down|dark (presence|figure|spirit|shadow))\b/i],
+    ['Fragment', /\b(fragments?|only remember|barely remember|can'?t remember (much|the rest)|bits and pieces|just a glimpse)\b/i],
+    ['False awakening', /\b(false awakening|thought i woke( up)?|woke up (inside|in) (the|another) dream)\b/i]],
+  feelings:[['Phenomenal', /\b(phenomenal|amazing|incredible|breathtaking)\b/i], ['Joyful', /\b(joy(ful)?|so happy|happy)\b/i], ['Loved', /\b(loved|felt love|so much love)\b/i], ['Peaceful', /\b(peace(ful)?|calm|serene)\b/i],
+    ['Empowered', /\b(empower(ed|ing)|powerful|strong|brave)\b/i], ['Excited', /\bexcit(ed|ing)\b/i], ['Curious', /\bcurious\b/i], ['Nostalgic', /\b(nostalgi(a|c)|childhood|growing up)\b/i],
+    ['Familiar', /\bfamiliar\b/i], ['New', /\b(brand new|never (seen|been)|unfamiliar)\b/i], ['Confused', /\bconfus(ed|ing|ion)\b/i], ['Frustrated', /\bfrustrat(ed|ing)\b/i],
+    ['Sad', /\b(sad|cried|crying|tears)\b/i], ['Anxious', /\b(anxious|anxiety|nervous|worried|panick?(ed|ing)?)\b/i], ['Scared', /\b(scared|afraid|terrified|fear(ful)?|frightened)\b/i]]
+};
+function blRe(name){ return new RegExp('(^|[^a-z0-9])' + String(name).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^a-z0-9])', 'i'); }
+function blNormText(t){ return String(t || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+function blParse(raw){
+  var lines = String(raw || '').replace(/\r\n?/g, '\n').split('\n'), items = [], cur = null, lastY = 0;
+  lines.forEach(function(line){
+    var l = line.replace(/^\s*(?:[*\u2022\u25AA\u25E6\u2023\u2043\-\u2013\u2014]|\d+[.)])\s+/, '').trim(), m = l && BL_AT.exec(l), d = null, title = '', rest = '';
+    if(m && (d = blYmd(m, 1, lastY))) rest = l.slice(m[0].length).trim();
+    else if(l && (m = BL_END.exec(l)) && (d = blYmd(m, 2, lastY))) title = m[1].replace(/[\s:\-\u2013\u2014|]+$/, '').trim();
+    if(d){ cur = {date:d > today() ? today() : d, title:title, paras:rest ? [rest] : []}; items.push(cur); lastY = parse(d).y; return; }
+    if(cur && l) cur.paras.push(line.trim());
+  });
+  if(!items.length && String(raw || '').trim()) items.push({date:today(), title:'', paras:String(raw).split(/\n+/).map(function(x){ return x.trim(); }).filter(Boolean), nodate:true});
+  var lib = {}; TAGS.forEach(function(t){ lib[t[0]] = allTags(t[0]).filter(function(n){ return n.length >= 3; }); });
+  return items.filter(function(x){ return x.paras.length || x.title; }).map(function(x){
+    var text = x.paras.join('\n'), all = (x.title + '\n' + text);
+    var dft = {id:'bl' + uid(), date:x.date, title:x.title || blTitle(text), text:text, types:[], feelings:[], people:[], places:[], symbols:[], food:'', nodate:!!x.nodate,
+      created:Date.now(), updated:Date.now(), sug:{types:[], feelings:[], people:[], places:[], symbols:[]}};
+    ['types', 'feelings'].forEach(function(k){ BL_SUG[k].forEach(function(r){ if(r[1].test(all)){ dft[k].push(r[0]); dft.sug[k].push(r[0]); } }); });
+    TAGS.forEach(function(t){ lib[t[0]].forEach(function(n){ if(dft[t[0]].length < 8 && blRe(n).test(all)){ dft[t[0]].push(n); dft.sug[t[0]].push(n); } }); });
+    var fm = text.match(/\b(?:before bed|last night)\s+i\s+(?:ate|had|drank)\s+([^.!?\n]{2,80})/i); if(fm){ dft.food = fm[1].trim(); }
+    return dft;
+  });
+}
+function blGet(id){ for(var i = 0; i < S.backlog.items.length; i++) if(S.backlog.items[i].id === id) return S.backlog.items[i]; return null; }
+function blTouch(b){ b.updated = Date.now(); save(); }
+function blDup(b){ var t = blNormText(b.text); return !!t && S.dreams.some(function(x){ return x.date === b.date && blNormText(x.text) === t; }); }
+function blReady(b){ return !!(String(b.text).trim() || String(b.title).trim()); }
+function blApprove(b){
+  var x = normDream({id:uid(), date:b.date > today() ? today() : b.date, title:b.title, text:b.text, types:b.types, feelings:b.feelings, people:b.people, places:b.places, symbols:b.symbols, food:b.food, created:Date.now(), updated:Date.now()});
+  S.dreams.push(x); S.backlog.done[b.id] = Date.now(); S.backlog.items = S.backlog.items.filter(function(y){ return y.id !== b.id; });
+  if(BL_OPEN === b.id) BL_OPEN = '';
+  return x;
+}
+function blBanner(){
+  var n = S.backlog.items.length; if(!n) return '';
+  return '<a class="card bl-note" href="#backlog"><span><b>' + plural(n, 'dream') + ' from your notes ' + (n === 1 ? 'is' : 'are') + ' waiting for review.</b> They join your journal once you approve them.</span><span class="btn sm primary">Review backlog</span></a>';
+}
+function blGrow(t){
+  var y = window.pageYOffset, sc = t.closest('.d-scroll'), st = sc ? sc.scrollTop : 0;
+  t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px';
+  if(sc && sc.scrollTop !== st) sc.scrollTop = st;
+  if(window.pageYOffset !== y) window.scrollTo(window.pageXOffset, y);
+}
+function blAfter(){ main.querySelectorAll('.bl-ta').forEach(blGrow); }
+function blChips(b, f, list, colors){
+  var sug = b.sug[f] || [];
+  return '<div class="chips" role="group">' + list.map(function(v){ var on = b[f].indexOf(v) >= 0, sg = sug.indexOf(v) >= 0;
+    return '<button type="button" class="chip' + (sg ? ' sug' : '') + '" data-act="bl-tog" data-id="' + esc(b.id) + '" data-f="' + f + '" data-v="' + esc(v) + '" aria-pressed="' + on + '">' + (sg ? '<span class="bl-sg" aria-label="suggested">✦</span>' : '') + (colors ? typeMark(v, 9) : '') + esc(v) + '</button>'; }).join('') + '</div>';
+}
+function blTags(b, t){
+  var f = t[0], sug = b.sug[f] || [];
+  return '<div><span class="lbl">' + t[1] + '</span><div class="tag-in">' + b[f].map(function(n){ return '<span class="tag' + (sug.indexOf(n) >= 0 ? ' sug' : '') + '">' + (sug.indexOf(n) >= 0 ? '<span class="bl-sg" aria-label="found in your notes">✦</span>' : '') + esc(n) + '<button type="button" data-act="bl-untag" data-id="' + esc(b.id) + '" data-f="' + f + '" data-v="' + esc(n) + '" aria-label="Remove ' + esc(n) + '">×</button></span>'; }).join('') +
+    '<input data-bltag="' + f + '" data-id="' + esc(b.id) + '" list="dl-bl-' + f + '" placeholder="Add a ' + t[2] + '…" enterkeyhint="done" autocomplete="off" aria-label="Add a ' + t[2] + '"></div></div>';
+}
+function blItem(b){
+  var open = BL_OPEN === b.id, p = parse(b.date), dup = blDup(b);
+  var chips = (b.types.length ? b.types.map(typePill).join('') : '') + (b.nodate ? '<span class="pill bl-need">No date found</span>' : '') + (dup ? '<span class="pill bl-dup">Already in your journal?</span>' : '');
+  var head = '<div class="bl-row"><div class="bl-l"><span class="bl-d">' + MON[p.m - 1] + ' ' + p.d + '</span><span class="bl-dw">' + DOW[dowOf(b.date)].toUpperCase() + ' · ' + p.y + '</span></div>' +
+    '<div class="bl-r">' + (chips ? '<div class="btn-row bl-chips">' + chips + '</div>' : '') + '<div class="bl-top"><h3>' + esc(b.title || 'Untitled dream') + '</h3><button type="button" class="btn sm' + (open ? '' : ' primary') + '" data-act="bl-open" data-id="' + esc(b.id) + '" aria-expanded="' + open + '">' + (open ? 'Close' : 'Review') + '</button></div>' +
+    (open ? '' : '<p class="bl-prev">' + esc(clip(b.text, 260)) + '</p>') + '</div></div>';
+  if(!open) return '<article class="card bl-item" id="bl-' + esc(b.id) + '">' + head + '</article>';
+  var form = '<div class="bl-form">' +
+    '<div class="row2 field"><label><span class="lbl">Dream title</span><input class="in" data-bl="title" data-id="' + esc(b.id) + '" value="' + esc(b.title) + '" autocomplete="off"></label>' +
+    '<label><span class="lbl">Morning of</span><input type="date" class="in" data-bl="date" data-id="' + esc(b.id) + '" value="' + esc(b.date) + '" max="' + today() + '"></label></div>' +
+    '<label class="field" style="display:block"><span class="lbl">The dream</span><textarea class="ta bl-ta" rows="3" data-bl="text" data-id="' + esc(b.id) + '">' + esc(b.text) + '</textarea></label>' +
+    '<div class="field"><span class="lbl">Dream type <em class="bl-sgk">✦ suggested from your note</em></span>' + blChips(b, 'types', TYPES, true) + '</div>' +
+    '<div class="field"><span class="lbl">How did it feel?</span>' + blChips(b, 'feelings', FEELS) + '</div>' +
+    '<div class="row3 field">' + TAGS.map(function(t){ return blTags(b, t); }).join('') + '</div>' +
+    '<div class="field"><label><span class="lbl">What did you drink and/or eat?</span><textarea class="ta ta-sm" rows="2" data-bl="food" data-id="' + esc(b.id) + '" placeholder="In the dream, or before bed">' + esc(b.food) + '</textarea></label></div>' +
+    '<p class="hint">Bedtime, sleep quality, how vivid it was and what you think it means can be added when you open the dream later.</p>' +
+    '<div class="btn-row bl-acts"><button type="button" class="btn primary" data-act="bl-approve" data-id="' + esc(b.id) + '"' + (blReady(b) ? '' : ' disabled') + '>Add to my journal</button>' +
+    '<button type="button" class="btn" data-act="bl-split" data-id="' + esc(b.id) + '">Split into two</button>' +
+    '<button type="button" class="btn danger bl-del" data-act="bl-del" data-id="' + esc(b.id) + '">Delete</button></div></div>';
+  return '<article class="card bl-item open" id="bl-' + esc(b.id) + '">' + head + form + '</article>';
+}
+function backlogPage(p){
+  var items = S.backlog.items.slice().sort(function(a, b){ return a.date.localeCompare(b.date) || (a.created || 0) - (b.created || 0); });
+  var ready = items.filter(blReady).length, done = Object.keys(S.backlog.done).length;
+  var imp = '<section class="card bl-imp"><h2>Import notes</h2>' +
+    '<p class="hint" style="margin:6px 0 16px">In iPhone Notes, tap <b>Select All</b>, then <b>Copy</b>, and paste it here. A new dream starts at each line that begins or ends with a date, like <b>11/20/26:</b> or <b>Flying over the ocean – Nov 20</b>. The date is the morning you woke up. Dates in the middle of a sentence are left alone.</p>' +
+    '<form data-form="bl-import"><label class="vh" for="bl-paste">Paste your notes</label><textarea id="bl-paste" class="ta bl-paste" name="text" rows="5" placeholder="Paste a note here…"></textarea>' +
+    '<div class="btn-row" style="margin-top:14px"><button type="submit" class="btn primary">Find dreams</button><span class="muted" style="font-size:13px">Your notes stay on this device and sync only to your own encrypted backup.</span></div></form>' +
+    (BL_MSG ? '<p class="note-ok" role="status">' + esc(BL_MSG) + '</p>' : '') + cc('bl', 'cc-a') + '</section>';
+  var dl = TAGS.map(function(t){ return '<datalist id="dl-bl-' + t[0] + '">' + allTags(t[0]).map(function(n){ return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>'; }).join('');
+  var lh = '<div class="bl-listh"><h2>To review</h2><span>' + plural(items.length, 'dream') + ' waiting · ' + done + ' reviewed · oldest first</span>' + (items.length ? '<button type="button" class="btn sm gold" data-act="bl-all"' + (ready ? '' : ' disabled') + '>Add all to my journal (' + ready + ')</button>' : '') + '</div>';
+  var list = items.length ? '<div class="bl-list">' + items.map(blItem).join('') + '</div>' : '<section class="card"><p class="empty">Nothing waiting. Paste a note above to start.</p></section>';
+  return head(p) + '<div class="body bl-page">' + imp + lh + list + dl + bband() + '</div>';
+}
+function blAddTag(b, f, v){
+  v = String(v || '').replace(/,+$/, '').trim(); if(!v || !b) return false;
+  var known = allTags(f).filter(function(n){ return n.toLowerCase() === v.toLowerCase(); })[0]; if(known) v = known;
+  if(b[f].some(function(n){ return n.toLowerCase() === v.toLowerCase(); })) return false;
+  b[f].push(v); blTouch(b); return true;
+}
+function blReopen(id){ var el = document.getElementById('bl-' + id); if(el) try { el.scrollIntoView({block:'nearest'}); } catch(e){} }
+
+document.addEventListener('click', function(e){
+  var t = e.target.closest && e.target.closest('[data-act]'); if(!t) return;
+  var act = t.getAttribute('data-act'), id = t.getAttribute('data-id'), b;
+  if(act.indexOf('bl-') !== 0) return;
+  switch(act){
+    case 'bl-open': BL_OPEN = BL_OPEN === id ? '' : id; BL_MSG = ''; render(); if(BL_OPEN) blReopen(id); break;
+    case 'bl-tog':
+      b = blGet(id); if(!b) break;
+      var f = t.getAttribute('data-f'), v = t.getAttribute('data-v'), i = b[f].indexOf(v); if(i >= 0) b[f].splice(i, 1); else b[f].push(v);
+      blTouch(b); render(); break;
+    case 'bl-untag': b = blGet(id); if(!b) break; var uf = t.getAttribute('data-f'); b[uf] = b[uf].filter(function(n){ return n !== t.getAttribute('data-v'); }); blTouch(b); render(); break;
+    case 'bl-approve':
+      b = blGet(id); if(!b || !blReady(b)) break;
+      main.querySelectorAll('#bl-' + id + ' [data-bltag]').forEach(function(inp){ if(inp.value.trim()) blAddTag(b, inp.getAttribute('data-bltag'), inp.value); });
+      var x = blApprove(b); BL_MSG = 'Added “' + dTitle(x) + '” to the morning of ' + fmtLong(x.date) + '.'; flush(); render(); window.scrollTo({top:0, behavior:'smooth'}); break;
+    case 'bl-split':
+      b = blGet(id); if(!b) break;
+      var ps = b.text.split('\n'), half = Math.ceil(ps.length / 2), b2 = JSON.parse(JSON.stringify(b));
+      b2.id = 'bl' + uid(); b2.created = (b.created || 0) + 1; b2.updated = Date.now();
+      if(ps.length > 1){ b.text = ps.slice(0, half).join('\n'); b2.text = ps.slice(half).join('\n'); b2.title = blTitle(b2.text); } else { b2.text = ''; b2.title = ''; }
+      S.backlog.items.push(b2); blTouch(b); BL_OPEN = b2.id; BL_MSG = 'Split into two. The second half is open below.'; render(); blReopen(b2.id); break;
+    case 'bl-del':
+      b = blGet(id); if(!b) break;
+      armed(t, function(){ S.backlog.done[b.id] = Date.now(); S.backlog.items = S.backlog.items.filter(function(x){ return x.id !== b.id; }); if(BL_OPEN === b.id) BL_OPEN = ''; BL_MSG = 'Deleted “' + (b.title || 'that dream') + '”.'; save(); render(); }); break;
+    case 'bl-all':
+      var rd = S.backlog.items.filter(blReady); rd.forEach(blApprove); BL_MSG = 'Added ' + plural(rd.length, 'dream') + ' to your journal.'; flush(); render(); window.scrollTo({top:0, behavior:'smooth'}); break;
+  }
+});
+document.addEventListener('submit', function(e){
+  var f = e.target; if(f.getAttribute('data-form') !== 'bl-import') return;
+  e.preventDefault();
+  var txt = String(new FormData(f).get('text') || ''); if(!txt.trim()){ var ta = f.querySelector('textarea'); if(ta) ta.focus(); return; }
+  var found = blParse(txt), have = {}, skip = 0;
+  S.backlog.items.forEach(function(x){ have[x.date + '|' + blNormText(x.text)] = 1; });
+  found = found.filter(function(x){ var k = x.date + '|' + blNormText(x.text); if(have[k] || blDup(x)){ skip++; return false; } have[k] = 1; return true; });
+  S.backlog.items = S.backlog.items.concat(found); flush();
+  BL_OPEN = found.length ? found.slice().sort(function(a, b){ return a.date.localeCompare(b.date); })[0].id : BL_OPEN;
+  BL_MSG = 'Found ' + plural(found.length, 'dream') + (skip ? ' (skipped ' + skip + ' already in your journal or waiting here)' : '') + (found.some(function(x){ return x.nodate; }) ? '. No date was found, so it’s set to today. Change it below.' : '.');
+  render();
+});
+document.addEventListener('input', function(e){
+  var el = e.target; if(!el.hasAttribute || !el.hasAttribute('data-bl')) return;
+  var b = blGet(el.getAttribute('data-id')); if(!b) return; var f = el.getAttribute('data-bl');
+  if(f === 'date') return;
+  b[f] = el.value; blTouch(b);
+  if(f === 'text') blGrow(el);
+  if(f === 'title'){ var h3 = el.closest('.bl-item') && el.closest('.bl-item').querySelector('.bl-top h3'); if(h3) h3.textContent = el.value || 'Untitled dream'; }
+  if(f === 'text' || f === 'title'){ var ab = main.querySelector('#bl-' + b.id + ' [data-act=bl-approve]'); if(ab) ab.disabled = !blReady(b); }
+});
+document.addEventListener('change', function(e){
+  var el = e.target; if(!el.hasAttribute) return;
+  if(el.hasAttribute('data-bl') && el.getAttribute('data-bl') === 'date'){ var b = blGet(el.getAttribute('data-id')); if(!b) return; if(!validISO(el.value)){ el.value = b.date; return; } b.date = el.value > today() ? today() : el.value; b.nodate = false; blTouch(b); render(); return; }
+  if(el.hasAttribute('data-bltag')){
+    var bt = blGet(el.getAttribute('data-id')), f = el.getAttribute('data-bltag');
+    if(bt && blAddTag(bt, f, el.value)){ var v = bt[f][bt[f].length - 1]; el.insertAdjacentHTML('beforebegin', '<span class="tag">' + esc(v) + '<button type="button" data-act="bl-untag" data-id="' + esc(bt.id) + '" data-f="' + f + '" data-v="' + esc(v) + '" aria-label="Remove ' + esc(v) + '">×</button></span>'); }
+    el.value = '';
+  }
+});
+document.addEventListener('keydown', function(e){
+  var el = e.target; if(!el.hasAttribute || !el.hasAttribute('data-bltag') || !(e.key === 'Enter' || e.key === ',')) return;
+  e.preventDefault(); var b = blGet(el.getAttribute('data-id')), f = el.getAttribute('data-bltag');
+  if(b && blAddTag(b, f, el.value)){ el.value = ''; render(); var again = main.querySelector('#bl-' + b.id + ' [data-bltag="' + f + '"]'); if(again) try { again.focus({preventScroll:true}); } catch(err){} }
+});
+
 /* ---------- sync across devices: encrypted file in your own GitHub account ---------- */
 var SY_KEY = 'dreamsJournal.sync.v1', SY_FILE = 'dreams-journal-sync.json', SY_API = 'https://api.github.com';
 var SY_TOKEN_URL = 'https://github.com/settings/tokens/new?scopes=gist&description=Dreams%20Journal%20sync';
-/* APP_V 2: lessons, new dream types and the food box. Older copies stop syncing and ask to refresh instead of dropping them. */
-var SY_SECS = ['intents','lib','signs','checks','settings','lessons'], SY_ITER = 210000, APP_V = 2;
+/* APP_V 2: lessons, new dream types and the food box. APP_V 3: the notes backlog. Older copies stop syncing and ask to refresh instead of dropping them. */
+var SY_SECS = ['intents','lib','signs','checks','settings','lessons','backlog'], SY_ITER = 210000, APP_V = 3;
 var SYS = syLoad(), SY_STATE = 'ok', SY_BUSY = false, SY_AGAIN = false, SY_TIMER = null, SY_QUIET = false;
 var SY_FORM = syBlankForm();
 function syBlankForm(){ return {token:'', pass:'', pass2:'', step:'', show:false, msg:'', bad:false, busy:false}; }
@@ -1504,11 +1776,16 @@ function syChanged(pl, base){
   for(i = 0; i < a.length; i++) if(b.items[a[i]] !== base.items[a[i]]) return true;
   return false;
 }
-function syHasData(st){ return st.dreams.length + Object.keys(st.intents).length + st.signs.length + Object.keys(st.lib).length + st.lessons.length > 0; }
+function syHasData(st){ return st.dreams.length + Object.keys(st.intents).length + st.signs.length + Object.keys(st.lib).length + st.lessons.length + st.backlog.items.length > 0; }
 function syClone(v){ return JSON.parse(JSON.stringify(v == null ? null : v)); }
 function syUnionById(L, R){ var out = syClone(R) || [], at = {}; out.forEach(function(x, i){ at[x.id] = i; }); (L || []).forEach(function(x){ if(at[x.id] != null) out[at[x.id]] = syClone(x); else out.push(syClone(x)); }); return out; }
 function syMergeSec(k, L, R){
   if(k === 'signs') return syUnionById(L, R);
+  if(k === 'backlog'){
+    var bo = {items:[], done:Object.assign({}, (R && R.done) || {}, (L && L.done) || {})}, bat = {};
+    ((R && R.items) || []).concat((L && L.items) || []).forEach(function(x){ if(!x || bo.done[x.id]) return; var i = bat[x.id]; if(i == null){ bat[x.id] = bo.items.length; bo.items.push(syClone(x)); } else if((x.updated || 0) >= (bo.items[i].updated || 0)) bo.items[i] = syClone(x); });
+    return bo;
+  }
   if(k === 'lessons'){ var out = syClone(R) || [], at = {}; out.forEach(function(x, i){ at[x.id] = i; }); (L || []).forEach(function(x){ var i = at[x.id]; if(i == null) out.push(syClone(x)); else if((x.updated || 0) >= (out[i].updated || 0)) out[i] = syClone(x); }); return out; }
   if(k === 'checks'){ var c = Object.assign({}, syClone(R) || {}); Object.keys(L || {}).forEach(function(d){ c[d] = Math.max(c[d] || 0, L[d]); }); return c; }
   if(k === 'intents' || k === 'lib') return Object.assign({}, syClone(R) || {}, syClone(L) || {});
@@ -1734,7 +2011,7 @@ if(SYS.on) setTimeout(syncNow, 600);
 var lastDay = today();
 setInterval(function(){ if(today() !== lastDay){ lastDay = today(); if(!D.mode) render(); } }, 60000);
 if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
-window.__dreams = {get state(){ return S; }, get sk(){ return SK; }, render:render, flush:flush, go:go};
+window.__dreams = {get state(){ return S; }, get sk(){ return SK; }, render:render, flush:flush, go:go, blParse:blParse, get backlog(){ return S.backlog; }};
 })();
 </script>
 </body>
